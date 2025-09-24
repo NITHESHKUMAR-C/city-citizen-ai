@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Camera, 
@@ -16,10 +16,36 @@ import {
   Bell,
   ChevronRight
 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const WelcomePage = () => {
   const [selectedLanguage, setSelectedLanguage] = useState('English');
+  const [userProfile, setUserProfile] = useState<any>(null);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      fetchUserProfile();
+    } else {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user?.id)
+        .single();
+      
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const languages = [
     { code: 'en', name: 'English', nativeName: 'English' },
@@ -41,7 +67,8 @@ const WelcomePage = () => {
     { id: 'drainage', name: 'Drainage', icon: '🌊', color: 'primary' }
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await signOut();
     navigate('/login');
   };
 
@@ -54,7 +81,7 @@ const WelcomePage = () => {
             <div className="flex items-center space-x-4">
               <h1 className="text-2xl font-bold">🏛️ Civic Issues App</h1>
               <Badge variant="secondary" className="bg-white/20 text-white">
-                Citizen Dashboard
+                {userProfile?.role === 'admin' ? 'Admin Dashboard' : 'Citizen Dashboard'}
               </Badge>
             </div>
             <div className="flex items-center space-x-4">
@@ -126,7 +153,12 @@ const WelcomePage = () => {
               <p className="text-center text-muted-foreground">
                 Take a photo or video to report civic issues instantly
               </p>
-              <Button className="w-full" variant="hero" size="lg">
+              <Button 
+                className="w-full" 
+                variant="hero" 
+                size="lg"
+                onClick={() => navigate('/report')}
+              >
                 <Camera className="h-5 w-5 mr-2" />
                 Start Reporting
               </Button>
@@ -156,7 +188,12 @@ const WelcomePage = () => {
               <p className="text-center text-muted-foreground">
                 Monitor the progress of your reported issues
               </p>
-              <Button className="w-full" variant="secondary" size="lg">
+              <Button 
+                className="w-full" 
+                variant="secondary" 
+                size="lg"
+                onClick={() => navigate('/track')}
+              >
                 <Clock className="h-5 w-5 mr-2" />
                 View My Reports
               </Button>

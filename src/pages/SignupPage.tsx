@@ -7,17 +7,42 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CreditCard, Mail, Phone, Shield, User } from "lucide-react";
 import heroImage from "@/assets/civic-hero.jpg";
+import { useAuth } from "@/hooks/useAuth";
 
 const SignupPage = () => {
   const [signupType, setSignupType] = useState<'email' | 'aadhaar'>('email');
   const [accountType, setAccountType] = useState<'user' | 'admin'>('user');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here we would integrate with backend authentication
-    // For now, we'll redirect to login
-    navigate('/login');
+    
+    if (password !== confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    
+    setLoading(true);
+    
+    const { error } = await signUp(email, password, {
+      first_name: firstName,
+      last_name: lastName,
+      role: accountType
+    });
+    
+    if (!error) {
+      navigate('/login');
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -113,49 +138,76 @@ const SignupPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" placeholder="Enter first name" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" placeholder="Enter last name" required />
-                  </div>
-                </div>
-
-                {signupType === 'email' ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input id="email" type="email" placeholder="Enter email address" required />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Label htmlFor="aadhaar">Aadhaar Number</Label>
                     <Input 
-                      id="aadhaar" 
-                      placeholder="Enter 12-digit Aadhaar number" 
-                      maxLength={12}
-                      pattern="[0-9]{12}"
+                      id="firstName" 
+                      placeholder="Enter first name" 
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required 
                     />
                   </div>
-                )}
+                  <div className="space-y-2">
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input 
+                      id="lastName" 
+                      placeholder="Enter last name" 
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="Enter email address" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required 
+                  />
+                </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" type="tel" placeholder="+91 XXXXX XXXXX" required />
+                  <Input 
+                    id="phone" 
+                    type="tel" 
+                    placeholder="+91 XXXXX XXXXX" 
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required 
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" placeholder="Create strong password" required />
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="Create strong password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required 
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input id="confirmPassword" type="password" placeholder="Confirm your password" required />
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    placeholder="Confirm your password" 
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required 
+                  />
                 </div>
 
-                <Button type="submit" className="w-full" variant="hero" size="lg">
-                  Create Account
+                <Button type="submit" className="w-full" variant="hero" size="lg" disabled={loading}>
+                  {loading ? 'Creating Account...' : 'Create Account'}
                 </Button>
               </form>
 

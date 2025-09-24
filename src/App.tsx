@@ -9,6 +9,8 @@ import SignupPage from "./pages/SignupPage";
 import LoginPage from "./pages/LoginPage";
 import WelcomePage from "./pages/WelcomePage";
 import AdminDashboard from "./pages/AdminDashboard";
+import ReportIssue from "./pages/ReportIssue";
+import TrackStatus from "./pages/TrackStatus";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/welcome" element={<WelcomePage />} />
+          <Route path="/report" element={<ReportIssue />} />
+          <Route path="/track" element={<TrackStatus />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

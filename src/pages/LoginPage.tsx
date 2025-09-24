@@ -3,24 +3,60 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LogIn, Shield, User } from "lucide-react";
 import heroImage from "@/assets/civic-hero.jpg";
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const LoginPage = () => {
   const [accountType, setAccountType] = useState<'user' | 'admin'>('user');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signIn, user } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Here we would integrate with backend authentication
-    // For now, we'll redirect based on account type
-    if (accountType === 'admin') {
-      navigate('/admin/dashboard');
-    } else {
+  useEffect(() => {
+    if (user) {
+      // Check user profile for role and redirect accordingly
+      checkUserProfile();
+    }
+  }, [user]);
+
+  const checkUserProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (profile?.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/welcome');
+      }
+    } catch (error) {
+      console.error('Error checking profile:', error);
       navigate('/welcome');
     }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    const { error } = await signIn(email, password);
+    
+    if (!error) {
+      // Navigation will be handled by useEffect when user state changes
+    }
+    
+    setLoading(false);
   };
 
   return (
@@ -83,10 +119,13 @@ const LoginPage = () => {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login">Email or Aadhaar</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input 
-                    id="login" 
-                    placeholder="Enter email or Aadhaar number" 
+                    id="email" 
+                    type="email"
+                    placeholder="Enter your email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required 
                   />
                 </div>
@@ -97,6 +136,8 @@ const LoginPage = () => {
                     id="password" 
                     type="password" 
                     placeholder="Enter your password" 
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required 
                   />
                 </div>
@@ -114,9 +155,9 @@ const LoginPage = () => {
                   </button>
                 </div>
 
-                <Button type="submit" className="w-full" variant="hero" size="lg">
+                <Button type="submit" className="w-full" variant="hero" size="lg" disabled={loading}>
                   <LogIn className="h-4 w-4 mr-2" />
-                  Sign In
+                  {loading ? 'Signing In...' : 'Sign In'}
                 </Button>
               </form>
 
